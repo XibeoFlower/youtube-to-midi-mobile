@@ -60,7 +60,7 @@ class MidiWriter(private val ticksPerQuarter: Int = 480, private val bpm: Int = 
         // Track name meta event at tick 0
         writeVarLen(body, 0)
         val nameBytes = trackName.toByteArray(Charsets.US_ASCII)
-        body.write(0xFF); body.write(0x03); writeVarLen(body, nameBytes.size); body.write(nameBytes)
+        body.write(0xFF); body.write(0x03); writeVarLen(body, nameBytes.size.toLong()); body.write(nameBytes)
 
         if (tempoMeta) {
             val microsPerQuarter = (60_000_000L / bpm)
