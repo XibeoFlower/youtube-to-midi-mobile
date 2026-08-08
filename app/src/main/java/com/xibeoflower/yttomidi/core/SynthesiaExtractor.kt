@@ -15,12 +15,6 @@ data class ExtractionSettings(
     val tempoBpm: Int = 120
 )
 
-data class ExtractionResult(
-    val notes: List<NoteEvent>,
-    val videoWidthAtCalibration: Int = REF_WIDTH,
-    val videoHeightAtCalibration: Int = REF_HEIGHT
-)
-
 /**
  * Kotlin port of the Python `SynthesiaExtractor` class: samples a small pixel
  * region at each of the 88 piano-key x-positions along a fixed y-line, and
