@@ -1,0 +1,73 @@
+name: Build APK
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Sanity-check known fixed lines
+        run: |
+          MW="app/src/main/java/com/xibeoflower/yttomidi/core/MidiWriter.kt"
+          SE="app/src/main/java/com/xibeoflower/yttomidi/core/SynthesiaExtractor.kt"
+
+          if [ ! -f "$MW" ]; then
+            echo "::error::Khong tim thay $MW - ban chua copy file vao dung duong dan."
+            exit 1
+          fi
+          if [ ! -f "$SE" ]; then
+            echo "::error::Khong tim thay $SE - ban chua copy file vao dung duong dan."
+            exit 1
+          fi
+
+          if ! grep -q "nameBytes.size.toLong()" "$MW"; then
+            echo "::error::$MW dang dung ban CU (thieu .toLong() o nameBytes.size). Hay ghi de bang ban da sua roi commit lai."
+            exit 1
+          fi
+
+          if grep -q "class ExtractionResult" "$SE"; then
+            echo "::error::$SE dang dung ban CU (van con ExtractionResult gay loi REF_WIDTH/REF_HEIGHT). Hay ghi de bang ban da sua roi commit lai."
+            exit 1
+          fi
+
+          echo "OK: ca hai file da o ban da sua."
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          cache-read-only: false
+
+      - name: Build debug APK
+        run: gradle assembleDebug --no-daemon --stacktrace
+
+      - name: Upload APK
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: yt-to-midi-debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Upload build reports on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-reports
+          path: |
+            build/reports
+            app/build/reports
+          if-no-files-found: ignore
